@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2016
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityAssetLib", "UnityAssetLib\UnityAssetLib.csproj", "{D1727F48-2255-46B2-92BE-613BCF2201FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityAssetLib.TextureConversion", "UnityAssetLib.TextureConversion\UnityAssetLib.TextureConversion.csproj", "{09326E72-D248-4E1E-98CF-452EA3ED6011}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D1727F48-2255-46B2-92BE-613BCF2201FE} = {D1727F48-2255-46B2-92BE-613BCF2201FE}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D1727F48-2255-46B2-92BE-613BCF2201FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1727F48-2255-46B2-92BE-613BCF2201FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1727F48-2255-46B2-92BE-613BCF2201FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1727F48-2255-46B2-92BE-613BCF2201FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09326E72-D248-4E1E-98CF-452EA3ED6011}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09326E72-D248-4E1E-98CF-452EA3ED6011}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09326E72-D248-4E1E-98CF-452EA3ED6011}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09326E72-D248-4E1E-98CF-452EA3ED6011}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3FFBD699-B212-4678-95A8-CC2CC7F36DE7}
+	EndGlobalSection
+EndGlobal
