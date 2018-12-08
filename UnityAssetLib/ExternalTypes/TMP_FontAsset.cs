@@ -26,6 +26,8 @@ namespace UnityAssetLib.ExternalTypes
 
         public PPtr[] fallbackFontAssets;
 
+        public FontCreationSetting fontCreationSetting;
+
         public FontWeights[] fontWeights;
 
         public float normalStyle;
@@ -72,6 +74,23 @@ namespace UnityAssetLib.ExternalTypes
             public Rectf m_SecondGlyphAdjustments;
 
             public float xOffset;
+        }
+
+        [UnitySerializable]
+        public class FontCreationSetting
+        {
+            public string fontSourcePath;
+            public int fontSizingMode;
+            public int fontSize;
+            public int fontPadding;
+            public int fontPackingMode;
+            public int fontAtlasWidth;
+            public int fontAtlasHeight;
+            public int fontCharacterSet;
+            public int fontStyle;
+            public float fontStlyeModifier;
+            public int fontRenderMode;
+            public bool fontKerning;
         }
 
         [UnitySerializable]
