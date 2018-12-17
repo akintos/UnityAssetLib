@@ -20,8 +20,9 @@ namespace UnityAssetLib.Util
 
         public static void WriteAlignedString(this BinaryWriter writer, string value)
         {
-            writer.Write(value.Length);
-            writer.Write(Encoding.UTF8.GetBytes(value));
+            var data = Encoding.UTF8.GetBytes(value);
+            writer.Write(data.Length);
+            writer.Write(data);
             writer.AlignStream();
         }
     }

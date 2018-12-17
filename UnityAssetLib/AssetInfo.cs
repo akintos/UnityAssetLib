@@ -38,6 +38,11 @@ namespace UnityAssetLib
             }
         }
 
+        public uint RealOffset
+        {
+            get => dataOffset + asset.data_offset;
+        }
+
         public ClassIDType ClassIDType
         {
             get
@@ -61,7 +66,7 @@ namespace UnityAssetLib
         public EndianBinaryReader InitReader()
         {
             var buf = asset.buf;
-            buf.Position = asset.data_offset + this.dataOffset;
+            buf.Position = RealOffset;
             return buf;
         }
 

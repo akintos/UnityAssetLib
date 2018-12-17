@@ -11,8 +11,8 @@ namespace UnityAssetLib
     public class AssetsFile: IDisposable
     {
         public readonly EndianBinaryReader buf;
-        private readonly string path;
-        private readonly string basepath;
+        public readonly string path;
+        public readonly string basepath;
 
         public readonly uint metadata_size;
         public readonly uint file_size;
@@ -35,6 +35,11 @@ namespace UnityAssetLib
         
         public static AssetsFile Open(string path)
         {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
             return new AssetsFile(path);
         }
 
@@ -160,6 +165,11 @@ namespace UnityAssetLib
             int size;
             int read = 0;
 
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+
             using(BinaryWriter w = new BinaryWriter(File.OpenWrite(path)))
             {
                 buf.Position = 0;
@@ -193,7 +203,16 @@ namespace UnityAssetLib
                         sizeArray[i] = objInfo.size;
                     }
 
-                    w.Write(fourByteArray);
+                    var pos = w.BaseStream.Position;
+                    var mod = pos % 4;
+                    if (mod != 0)
+                    {
+                        w.Write(new byte[4 - mod]);
+                    }
+                    else
+                    {
+                        w.Write(fourByteArray);
+                    }
                 }
 
                 uint totalSize = (uint)w.BaseStream.Position;

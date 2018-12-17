@@ -18,14 +18,14 @@ namespace UnityAssetLib.Serialization
             }
         }
 
-        public static T Deserialize<T>(AssetInfo assetInfo) where T : Types.Object
+        public static T Deserialize<T>(AssetInfo assetInfo, bool fullDeserialize=true) where T : Types.Object
         {
-            var ret = (T)Deserialize(typeof(T), assetInfo);
+            var ret = (T)Deserialize(typeof(T), assetInfo, fullDeserialize);
             ret.asset = assetInfo.asset;
             return ret;
         }
 
-        public static object Deserialize(Type classType, AssetInfo assetInfo)
+        public static object Deserialize(Type classType, AssetInfo assetInfo, bool fullDeserialize=true)
         {
             var reader = assetInfo.InitReader();
 
@@ -35,7 +35,7 @@ namespace UnityAssetLib.Serialization
 
             long readSize = (reader.Position - startPos);
 
-            if (readSize != assetInfo.size)
+            if (fullDeserialize && readSize != assetInfo.size)
             {
                 throw new UnitySerializationException("Failed to fully deserialize " + classType.FullName);
             }
