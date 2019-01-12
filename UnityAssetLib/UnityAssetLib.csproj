@@ -55,8 +55,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\UnitySerializationAttribute.cs" />
     <Compile Include="Serialization\UnitySerializer.cs" />
+    <Compile Include="Texture\DDSExporter.cs" />
     <Compile Include="TypeMetaData.cs" />
-    <Compile Include="Types\BaseTypes.cs" />
+    <Compile Include="Types\CommonTypes.cs" />
     <Compile Include="Types\Font.cs" />
     <Compile Include="Types\GameObject.cs" />
     <Compile Include="ExternalTypes\I2Loc_LanguageSource.cs" />
@@ -67,10 +68,12 @@
     <Compile Include="Types\Texture2D.cs" />
     <Compile Include="ExternalTypes\TMP_FontAsset.cs" />
     <Compile Include="TypeTree.cs" />
+    <Compile Include="UnityVersion.cs" />
+    <Compile Include="Util\ArrayExtensions.cs" />
     <Compile Include="Util\BinaryReaderExtensions.cs" />
     <Compile Include="Util\BinaryWriterExtensions.cs" />
     <Compile Include="Util\EndianBinaryReader.cs" />
-    <Compile Include="Util\TextureExporter.cs" />
+    <Compile Include="Texture\Texture2DExporter.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -42,12 +42,12 @@ namespace UnityAssetLib.Types
 
         public byte[] GetBytes()
         {
-            byte[] result = new byte[16];
+            byte[] result = new byte[0x10];
 
-            BitConverter.GetBytes(m_u32_0).CopyTo(result, 0);
-            BitConverter.GetBytes(m_u32_1).CopyTo(result, 4);
-            BitConverter.GetBytes(m_u32_2).CopyTo(result, 8);
-            BitConverter.GetBytes(m_u32_3).CopyTo(result, 12);
+            BitConverter.GetBytes(m_u32_0).CopyTo(result, 0x00);
+            BitConverter.GetBytes(m_u32_1).CopyTo(result, 0x04);
+            BitConverter.GetBytes(m_u32_2).CopyTo(result, 0x08);
+            BitConverter.GetBytes(m_u32_3).CopyTo(result, 0x0C);
 
             return result;
         }

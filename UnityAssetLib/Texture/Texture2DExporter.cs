@@ -6,22 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityAssetLib.Types;
 
-namespace UnityAssetLib.Util
+namespace UnityAssetLib.Texture
 {
-    class TextureExporter
+    public class Texture2DExporter
     {
-        const uint DDSD_CAPS        = 0x01;
-        const uint DDSD_HEIGHT      = 0x02;
-        const uint DDSD_WIDTH       = 0x04;
-        const uint DDSD_PITCH       = 0x08;
-        const uint DDSD_PIXELFORMAT = 0x1000;
-        const uint DDSD_MIPMAPCOUNT = 0x20000;
-        const uint DDSD_LINEARSIZE  = 0x80000;
-        const uint DDSD_DEPTH       = 0x800000;
-
-
-
-        public static string ExportTexture(Texture2D texture, string folder)
+        public static string ExportTexture(Texture2D texture, string folder, bool overwrite = false)
         {
             switch (texture.Format)
             {
@@ -38,7 +27,7 @@ namespace UnityAssetLib.Util
                 case TextureFormat.BGRA32:
                 case TextureFormat.RG16:
                 case TextureFormat.R8:
-                    return ExportDDS(texture, folder);
+                    return DDSExporter.ExportDDSTexture(texture, folder, overwrite);
                 case TextureFormat.DXT1Crunched:
                 case TextureFormat.DXT5Crunched:
                 case TextureFormat.ETC_RGB4Crunched:
@@ -88,32 +77,7 @@ namespace UnityAssetLib.Util
             }
         }
 
-        private static string ExportDDS(Texture2D texture, string folder)
-        {
-            throw new NotImplementedException(); // TODO: Implement DDS Export
-
-            byte[] data = GetTextureData(texture);
-
-            string texturePath = Path.Combine(folder, texture.m_Name + ".dds");
-
-            uint dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-
-            if (texture.m_MipCount > 0)
-            {
-                dwFlags |= DDSD_MIPMAPCOUNT;
-            }
-
-
-            using (var writer = new BinaryWriter(File.OpenWrite(texturePath)))
-            {
-                writer.Write(new byte[] { 0x44, 0x44, 0x53, 0x20, 0x7c }); // DDS Magic = "DDS "
-
-            }
-
-
-        }
-
-        private static byte[] GetTextureData(Texture2D texture)
+        internal static byte[] GetTextureData(Texture2D texture)
         {
             if (texture.imageData.Length != 0)
             {
@@ -127,7 +91,8 @@ namespace UnityAssetLib.Util
 
                 using (var reader = File.OpenRead(texturePath))
                 {
-                    reader.Read(buffer, (int)texture.m_StreamData.offset, (int)texture.m_StreamData.size);
+                    reader.Position = texture.m_StreamData.offset;
+                    reader.Read(buffer, 0, (int)texture.m_StreamData.size);
                 }
 
                 return buffer;
@@ -135,6 +100,5 @@ namespace UnityAssetLib.Util
 
             throw new ArgumentException("Texture2D object has no data information");
         }
-
     }
 }

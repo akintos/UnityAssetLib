@@ -9,7 +9,19 @@ namespace UnityAssetLib.Serialization
 {
     public class UnitySerializer
     {
-        public static T Deserialize<T>(byte[] data) where T : Types.Object
+        private readonly Version version;
+
+        public UnitySerializer(AssetsFile assetsFile)
+        {
+            this.version = assetsFile.version;
+        }
+
+        public UnitySerializer(Version version)
+        {
+            this.version = version;
+        }
+
+        public T Deserialize<T>(byte[] data) where T : Types.Object
         {
             using (var ms = new MemoryStream(data, false))
             using (var reader = new BinaryReader(ms))
@@ -18,14 +30,14 @@ namespace UnityAssetLib.Serialization
             }
         }
 
-        public static T Deserialize<T>(AssetInfo assetInfo, bool fullDeserialize=true) where T : Types.Object
+        public T Deserialize<T>(AssetInfo assetInfo, bool fullDeserialize=true) where T : Types.Object
         {
             var ret = (T)Deserialize(typeof(T), assetInfo, fullDeserialize);
             ret.asset = assetInfo.asset;
             return ret;
         }
 
-        public static object Deserialize(Type classType, AssetInfo assetInfo, bool fullDeserialize=true)
+        public object Deserialize(Type classType, AssetInfo assetInfo, bool fullDeserialize=true)
         {
             var reader = assetInfo.InitReader();
 
@@ -43,7 +55,7 @@ namespace UnityAssetLib.Serialization
             return ret;
         }
 
-        public static object Deserialize(Type classType, BinaryReader reader, object obj=null)
+        public object Deserialize(Type classType, BinaryReader reader, object obj=null)
         {
             if (!Attribute.IsDefined(classType, typeof(UnitySerializableAttribute)))
             {
@@ -69,7 +81,27 @@ namespace UnityAssetLib.Serialization
                 }
 
                 Type fieldType = field.FieldType;
-                
+
+                if (Attribute.IsDefined(field, typeof(UnityMinVersionAttribute)))
+                {
+                    var minAttrib = Attribute.GetCustomAttribute(field, typeof(UnityMinVersionAttribute)) as UnityMinVersionAttribute;
+                    if (minAttrib.version > version)
+                    {
+                        field.SetValue(obj, GetDefault(fieldType));
+                        continue;
+                    }
+                }
+
+                if (Attribute.IsDefined(field, typeof(UnityMaxVersionAttribute)))
+                {
+                    var maxAttrib = Attribute.GetCustomAttribute(field, typeof(UnityMaxVersionAttribute)) as UnityMaxVersionAttribute;
+                    if (maxAttrib.version < version)
+                    {
+                        field.SetValue(obj, GetDefault(fieldType));
+                        continue;
+                    }
+                }
+
                 object value = null;
 
                 if (fieldType.IsValueType)
@@ -90,6 +122,8 @@ namespace UnityAssetLib.Serialization
                     {
                         var elementType = fieldType.GetElementType();
                         int size = reader.ReadInt32();
+
+                        string elementName = elementType.Name;
 
                         if (size > 0x10000)
                         {
@@ -383,6 +417,15 @@ namespace UnityAssetLib.Serialization
             {
                 writer.Write((float)valueObj);
             }
+        }
+
+        public static object GetDefault(Type type)
+        {
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+            return null;
         }
     }
 

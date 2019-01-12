@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using UnityAssetLib.Util;
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 
 namespace UnityAssetLib
 {
@@ -19,7 +20,7 @@ namespace UnityAssetLib
         public readonly uint format;
         public readonly uint data_offset;
 
-        public readonly string version;
+        public readonly Version version;
         public readonly int platform;
 
         public readonly bool longObjectIDs = false;
@@ -65,7 +66,13 @@ namespace UnityAssetLib
             if (format >= 9 && buf.ReadUInt32() == 0)
                 buf.endian = EndianType.LittleEndian;
 
-            version = buf.ReadStringToNull();
+            string versionString = buf.ReadStringToNull();
+
+            versionString = versionString.Replace('p', '.');
+            versionString = versionString.Replace('f', '.');
+
+            version = new Version(versionString);
+
             platform = buf.ReadInt32();
 
             buf.endian = EndianType.LittleEndian;

@@ -15,8 +15,12 @@ namespace UnityAssetLib.Types
             set => m_TextureFormat = (int)value;
         }
 
+        public bool HasMips { get => m_MipCount > 0; }
+
         public string m_Name;
+        [UnityMinVersion(2017, 3)]
         public int m_ForcedFallbackFormat;
+        [UnityMinVersion(2017, 3)]
         public bool m_DownscaleFallback;
         public int m_Width;
         public int m_Height;
@@ -43,7 +47,9 @@ namespace UnityAssetLib.Types
             public int m_Aniso;
             public float m_MipBias;
             public int m_WrapU;
+            [UnityMinVersion(2017)]
             public int m_WrapV;
+            [UnityMinVersion(2017)]
             public int m_WrapW;
         }
     }
