@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityAssetLib.Util;
@@ -76,9 +77,10 @@ namespace UnityAssetLib.Serialization
             foreach (var field in classType.GetFields())
             {
                 if (!field.DeclaringType.Equals(classType))
-                {
                     continue;
-                }
+
+                if (field.IsLiteral || field.IsInitOnly)
+                    continue;
 
                 Type fieldType = field.FieldType;
 
@@ -103,12 +105,17 @@ namespace UnityAssetLib.Serialization
                 }
 
                 object value = null;
-
-                if (fieldType.IsValueType)
+                
+                if (fieldType.IsEnum)
+                {
+                    var enumType = Enum.GetUnderlyingType(fieldType);
+                    value = ReadValueType(enumType, reader, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
+                }
+                else if (fieldType.IsValueType)
                 {
                     value = ReadValueType(fieldType, reader, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
                 }
-                else if (fieldType.IsArray && fieldType.GetElementType().IsValueType)
+                else if (fieldType.IsArray && fieldType.GetElementType().IsValueType) // Value type array
                 {
                     value = ReadValueArray(fieldType.GetElementType(), reader);
                 }
@@ -121,36 +128,14 @@ namespace UnityAssetLib.Serialization
                     if (fieldType.IsArray)
                     {
                         var elementType = fieldType.GetElementType();
-                        int size = reader.ReadInt32();
 
-                        string elementName = elementType.Name;
+                        value = ReadArray(elementType, reader);
+                    }
+                    else if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(List<>))
+                    {
+                        var elementType = fieldType.GetGenericArguments()[0];
 
-                        if (size > 0x10000)
-                        {
-                            throw new IOException("Size exceeds limit : " + size);
-                        }
-                        if (elementType == typeof(string))
-                        {
-                            var valueArray = new string[size];
-
-                            for (int i = 0; i < size; i++)
-                            {
-                                valueArray[i] = reader.ReadAlignedString();
-                            }
-
-                            value = valueArray;
-                        }
-                        else
-                        {
-                            var valueArray = Array.CreateInstance(elementType, size);
-
-                            for (int i = 0; i < size; i++)
-                            {
-                                valueArray.SetValue(Deserialize(elementType, reader), i);
-                            }
-
-                            value = valueArray;
-                        }
+                        value = Activator.CreateInstance(fieldType, (IEnumerable)ReadArray(elementType, reader));
                     }
                     else
                     {
@@ -167,6 +152,34 @@ namespace UnityAssetLib.Serialization
 
             return obj;
         }
+
+        private Array ReadArray(Type elementType, BinaryReader reader)
+        {
+            int size = reader.ReadInt32();
+
+            if (size > 0x40000)
+                throw new IOException("Size exceeds limit : " + size);
+
+            var valueArray = Array.CreateInstance(elementType, size);
+
+            if (elementType == typeof(string))
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    valueArray.SetValue(reader.ReadAlignedString(), i);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    valueArray.SetValue(Deserialize(elementType, reader), i);
+                }
+            }
+
+            return valueArray;
+        }
+
 
         private static object ReadValueArray(Type valueType, BinaryReader reader)
         {
@@ -257,7 +270,7 @@ namespace UnityAssetLib.Serialization
             return ret;
         }
 
-        public static byte[] Serialize(object obj)
+        public byte[] Serialize(object obj)
         {
             using (var ms = new MemoryStream())
             using (var writer = new BinaryWriter(ms))
@@ -268,7 +281,7 @@ namespace UnityAssetLib.Serialization
             }
         }
 
-        public static void Serialize(object obj, BinaryWriter writer, Type objType = null)
+        public void Serialize(object obj, BinaryWriter writer, Type objType = null)
         {
             if (obj == null)
             {
@@ -284,42 +297,72 @@ namespace UnityAssetLib.Serialization
             {
                 Type elemType = objType.GetElementType();
 
+                var arrayObj = obj as Array;
+                int length = arrayObj.Length;
+
+                writer.Write(length);
+
                 if (elemType == typeof(Byte))
                 {
                     writer.Write(obj as byte[]);
+                    writer.AlignStream();
+                }
+                else if (elemType.IsValueType)
+                {
+                    foreach (object element in arrayObj)
+                    {
+                        WriteValueType(element, writer, objType, noAlign:true);
+                    }
+
+                    writer.AlignStream();
                 }
                 else
                 {
-                    var arrayObj = obj as Array;
-                    int length = arrayObj.Length;
-
-                    writer.Write(length);
-
-                    if (elemType.IsValueType)
+                    foreach (object element in arrayObj)
                     {
-                        foreach (object element in arrayObj)
-                        {
-                            WriteValueType(element, writer, noAlign:true);
-                        }
-
-                        writer.AlignStream();
-                    }
-                    else
-                    {
-                        foreach (object element in arrayObj)
-                        {
-                            Serialize(element, writer);
-                        }
+                        Serialize(element, writer);
                     }
                 }
+                
+            }
+            else if (objType.IsEnum)
+            {
+                var enumType = Enum.GetUnderlyingType(objType);
+                WriteValueType(obj, writer, enumType);
             }
             else if (objType.IsValueType)
             {
-                WriteValueType(obj, writer);
+                WriteValueType(obj, writer, objType);
             }
             else if (objType == typeof(string))
             {
                 writer.WriteAlignedString(obj as string);
+            }
+            else if (objType.IsGenericType && objType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                Type elemType = objType.GetGenericArguments()[0];
+
+                var listObj = obj as IList;
+                int length = listObj.Count;
+
+                writer.Write(length);
+
+                if (elemType.IsValueType)
+                {
+                    foreach (object element in listObj)
+                    {
+                        WriteValueType(element, writer, elemType, noAlign: true);
+                    }
+
+                    writer.AlignStream();
+                }
+                else
+                {
+                    foreach (object element in listObj)
+                    {
+                        Serialize(element, writer);
+                    }
+                }
             }
             else if (objType.IsClass)
             {
@@ -344,7 +387,7 @@ namespace UnityAssetLib.Serialization
 
                     if (fieldType.IsValueType)
                     {
-                        WriteValueType(fieldValue, writer, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
+                        WriteValueType(fieldValue, writer, fieldType, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
                     }
                     else
                     {
@@ -355,13 +398,14 @@ namespace UnityAssetLib.Serialization
             }
         }
 
-        private static void WriteValueType(object valueObj, BinaryWriter writer, bool noAlign = false)
+        private static void WriteValueType(object valueObj, BinaryWriter writer, Type valueType, bool noAlign = false)
         {
             if (valueObj == null)
             {
                 throw new ArgumentNullException("valueObj cannot be null");
             }
-            var valueType = valueObj.GetType();
+            if (valueType == null)
+                valueType = valueObj.GetType();
 
             if (valueType == typeof(Int32))
             {

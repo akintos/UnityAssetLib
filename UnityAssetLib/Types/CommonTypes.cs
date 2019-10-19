@@ -16,6 +16,13 @@ namespace UnityAssetLib.Types
     }
 
     [UnitySerializable]
+    public class Vector2
+    {
+        public float x;
+        public float y;
+    }
+
+    [UnitySerializable]
     public class Rectf
     {
         public float x;
@@ -30,6 +37,15 @@ namespace UnityAssetLib.Types
         public uint offset;
         public uint size;
         public string path;
+    }
+
+    [UnitySerializable]
+    public class ColorRGBA
+    {
+        public float r;
+        public float g;
+        public float b;
+        public float a;
     }
 
     [UnitySerializable]

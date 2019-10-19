@@ -68,8 +68,6 @@
     <Compile Include="Types\Texture2D.cs" />
     <Compile Include="ExternalTypes\TMP_FontAsset.cs" />
     <Compile Include="TypeTree.cs" />
-    <Compile Include="UnityVersion.cs" />
-    <Compile Include="Util\ArrayExtensions.cs" />
     <Compile Include="Util\BinaryReaderExtensions.cs" />
     <Compile Include="Util\BinaryWriterExtensions.cs" />
     <Compile Include="Util\EndianBinaryReader.cs" />
