@@ -384,8 +384,13 @@ namespace UnityAssetLib.Serialization
                     }
                     var fieldValue = field.GetValue(obj);
                     var fieldType = field.FieldType;
-
-                    if (fieldType.IsValueType)
+                    
+                    if (fieldType.IsEnum)
+                    {
+                        var enumType = Enum.GetUnderlyingType(fieldType);
+                        WriteValueType(fieldValue, writer, enumType);
+                    }
+                    else if (fieldType.IsValueType)
                     {
                         WriteValueType(fieldValue, writer, fieldType, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
                     }
