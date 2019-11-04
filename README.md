@@ -1,5 +1,5 @@
 # UnityAssetLib
-Simple library to handle Unity 2017+ assets files.
+Pure .Net implemention of Unity 2017+ asset files.
 
 Based on other great projects ([Perfare/AssetStudio](https://github.com/Perfare/AssetStudio), [HearthSim/UnityPack](https://github.com/HearthSim/UnityPack))
 
@@ -14,27 +14,17 @@ private static void Patch()
 
     string tempPath = Path.Combine(Path.GetTempPath(), "sharedassets0.assets");
 
-    if (!File.Exists(assetPath))
+    using (AssetsFile f = AssetsFile.Open(assetPath))
     {
-        Console.WriteLine("게임 애셋 파일을 찾을 수 없습니다.");
-        return;
-    }
-
-    using (var f = AssetsFile.Open(assetPath))
-    {
-        var fontAsset = f.GetAssetByName("SourceHanSerifSC-Regular");
-
-        if (fontAsset == null)
-        {
-            Console.WriteLine("Original font not found.");
-            return;
-        }
+        UnitySerializer serializer = new UnitySerializer(f);
+        
+        AssetInfo fontAsset = f.GetAssetByName("SourceHanSerifSC-Regular");
 
         // Deserialize asset from AssetsFile using AssetInfo
-        TMP_FontAsset oldFont = UnitySerializer.Deserialize<TMP_FontAsset>(fontAsset);
+        TMP_FontAsset oldFont = serializer.Deserialize<TMP_FontAsset>(fontAsset);
 
-        // Deserialize asset from byte array
-        TMP_FontAsset newFont = UnitySerializer.Deserialize<TMP_FontAsset>(Properties.Resources.NanumMyungjo_monobehaviour);
+        // Deserialize asset from resource
+        TMP_FontAsset newFont = serializer.Deserialize<TMP_FontAsset>(Properties.Resources.NanumMyungjo_monobehaviour);
 
         // Fix PPtr target
         newFont.m_Script = oldFont.m_Script;
@@ -42,7 +32,7 @@ private static void Patch()
         newFont.atlas    = oldFont.atlas;
 
         // Replace with new asset
-        f.ReplaceAsset(fontAsset.pathID, UnitySerializer.Serialize(newFont));
+        f.ReplaceAsset(fontAsset.pathID, serializer.Serialize(newFont));
 
         // Replace Texture2D asset
         var atlasAsset = f.GetAssetByName("SourceHanSerifSC-Regular Atlas");
@@ -53,14 +43,10 @@ private static void Patch()
     }
 
     if (File.Exists(assetBackupPath))
-    {
         File.Delete(assetBackupPath);
-    }
 
-    // Back original file, move temp file to original file path
+    // Backup original file, move temp file to original file path
     File.Move(assetPath, assetBackupPath);
     File.Move(tempPath, assetPath);
-
-    Console.WriteLine("패치가 완료되었습니다.");
 }
 ```
