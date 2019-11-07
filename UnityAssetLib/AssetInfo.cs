@@ -70,6 +70,12 @@ namespace UnityAssetLib
             return buf;
         }
 
+        public byte[] GetBytes()
+        {
+            var reader = InitReader();
+            return reader.ReadBytes((int) size);
+        }
+
         public string TryGetName()
         {
             if (IsKnownType)

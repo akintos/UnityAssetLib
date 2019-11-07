@@ -10,6 +10,6 @@ namespace UnityAssetLib.Types
     public class TextAsset : Object
     {
         public string m_Name;
-        public byte m_Data;
+        public byte[] m_Data;
     }
 }
