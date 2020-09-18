@@ -9,16 +9,18 @@ using System.Text.RegularExpressions;
 
 namespace UnityAssetLib
 {
-    public class AssetsFile: IDisposable
+    public class AssetsFile : IDisposable
     {
         public readonly EndianBinaryReader buf;
         public readonly string path;
         public readonly string basepath;
 
         public readonly uint metadata_size;
-        public readonly uint file_size;
+        public readonly long file_size;
         public readonly uint format;
-        public readonly uint data_offset;
+        public readonly long data_offset;
+
+        public readonly EndianType fileEndianType;
 
         public readonly Version version;
         public readonly int platform;
@@ -33,7 +35,7 @@ namespace UnityAssetLib
         public List<AssetReference> references;
 
         private Dictionary<long, byte[]> replaceDict = new Dictionary<long, byte[]>();
-        
+
         public static AssetsFile Open(string path)
         {
             if (!File.Exists(path))
@@ -64,7 +66,17 @@ namespace UnityAssetLib
             data_offset = buf.ReadUInt32();
 
             if (format >= 9 && buf.ReadUInt32() == 0)
-                buf.endian = EndianType.LittleEndian;
+                fileEndianType = EndianType.LittleEndian;
+
+            if (format >= 22)
+            {
+                metadata_size = buf.ReadUInt32();
+                file_size = buf.ReadInt64();
+                data_offset = buf.ReadInt64();
+                buf.BaseStream.Seek(8, SeekOrigin.Current); // Unknown value
+            }
+
+            buf.endian = fileEndianType;
 
             string versionString = buf.ReadStringToNull();
 
@@ -96,10 +108,10 @@ namespace UnityAssetLib
 
                 assetInfo.asset = this;
 
-                assetInfo.pathID     = ReadPathID();
-                assetInfo.dataOffset = buf.ReadUInt32();
-                assetInfo.size       = buf.ReadUInt32();
-                assetInfo.typeID     = buf.ReadInt32();
+                assetInfo.pathID = ReadPathID();
+                assetInfo.dataOffset = format >= 22 ? buf.ReadInt64() : buf.ReadUInt32();
+                assetInfo.size = buf.ReadUInt32();
+                assetInfo.typeID = buf.ReadInt32();
 
                 if (format < 16)
                     assetInfo.classID = buf.ReadUInt16();
@@ -177,21 +189,21 @@ namespace UnityAssetLib
                 File.Delete(path);
             }
 
-            using(BinaryWriter w = new BinaryWriter(File.OpenWrite(path)))
+            using (BinaryWriter w = new BinaryWriter(File.OpenWrite(path)))
             {
                 buf.Position = 0;
                 w.Write(buf.ReadBytes((int)data_offset));
 
                 int objCount = assets.Count;
 
-                uint[] offsetArray = new uint[objCount];
+                long[] offsetArray = new long[objCount];
                 uint[] sizeArray = new uint[objCount];
 
                 for (int i = 0; i < objCount; i++)
                 {
                     var objInfo = assets.ElementAt(i).Value;
 
-                    offsetArray[i] = (uint)(w.BaseStream.Position - data_offset);
+                    offsetArray[i] = w.BaseStream.Position - data_offset;
 
                     if (replaceDict.ContainsKey(objInfo.pathID))
                     {
@@ -200,7 +212,7 @@ namespace UnityAssetLib
                     }
                     else
                     {
-                        buf.Position = objInfo.dataOffset + data_offset;
+                        buf.Position = objInfo.RealOffset;
                         size = (int)objInfo.size;
                         while (size > 0 && (read = buf.Read(buffer, 0, Math.Min(buffer.Length, size))) > 0)
                         {
@@ -222,7 +234,7 @@ namespace UnityAssetLib
                     }
                 }
 
-                uint totalSize = (uint)w.BaseStream.Position;
+                long totalSize = w.BaseStream.Position;
 
                 w.BaseStream.Position = objectsIndexOffset;
 
@@ -242,7 +254,10 @@ namespace UnityAssetLib
                         w.Seek(4, SeekOrigin.Current);
                     }
 
-                    w.Write(offsetArray[i]);
+                    if (format >= 22)
+                        w.Write(offsetArray[i]);
+                    else
+                        w.Write((uint)offsetArray[i]);
                     w.Write(sizeArray[i]);
 
                     w.Seek(4, SeekOrigin.Current);
@@ -254,13 +269,21 @@ namespace UnityAssetLib
                         w.Seek(1, SeekOrigin.Current);
                 }
 
-                w.Seek(4, SeekOrigin.Begin);
+                if (format >= 22)
+                {
+                    w.Seek(0x18, SeekOrigin.Begin);
+                    var sizeBytes = BitConverter.GetBytes(totalSize);
+                    Array.Reverse(sizeBytes);
+                    w.Write(sizeBytes);
+                }
+                else
+                {
+                    w.Seek(4, SeekOrigin.Begin);
+                    var sizeBytes = BitConverter.GetBytes((uint)totalSize);
+                    Array.Reverse(sizeBytes);
+                    w.Write(sizeBytes);
+                }
 
-                var sizeBytes = BitConverter.GetBytes(totalSize);
-
-                Array.Reverse(sizeBytes);
-
-                w.Write(sizeBytes);
             }
         }
 

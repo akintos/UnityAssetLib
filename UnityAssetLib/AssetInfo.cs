@@ -9,7 +9,7 @@ namespace UnityAssetLib
         public AssetsFile asset;
 
         public long pathID;
-        public uint dataOffset;
+        public long dataOffset;
         public uint size;
 
         public int typeID;
@@ -38,7 +38,7 @@ namespace UnityAssetLib
             }
         }
 
-        public uint RealOffset
+        public long RealOffset
         {
             get => dataOffset + asset.data_offset;
         }
@@ -73,7 +73,7 @@ namespace UnityAssetLib
         public byte[] GetBytes()
         {
             var reader = InitReader();
-            return reader.ReadBytes((int) size);
+            return reader.ReadBytes((int)size);
         }
 
         public string TryGetName()
@@ -118,7 +118,7 @@ namespace UnityAssetLib
                 {
                     return "";
                 }
-                
+
                 try
                 {
                     var nameBytes = buf.ReadBytes(nameLength);
