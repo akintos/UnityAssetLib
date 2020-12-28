@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>UnityAssetLib</RootNamespace>
     <AssemblyName>UnityAssetLib</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -67,7 +67,7 @@
     <Compile Include="Types\TextAsset.cs" />
     <Compile Include="Types\Texture2D.cs" />
     <Compile Include="ExternalTypes\TMP_FontAsset.cs" />
-    <Compile Include="TypeTree.cs" />
+    <Compile Include="TypeTreeNode.cs" />
     <Compile Include="Util\BinaryReaderExtensions.cs" />
     <Compile Include="Util\BinaryWriterExtensions.cs" />
     <Compile Include="Util\EndianBinaryReader.cs" />

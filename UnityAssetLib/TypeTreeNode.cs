@@ -7,7 +7,9 @@ using UnityAssetLib.Util;
 
 namespace UnityAssetLib
 {
-    public class TypeTree
+
+    [System.Diagnostics.DebuggerDisplay("{type} {name}")]
+    public class TypeTreeNode
     {
         public uint format;
 
@@ -19,7 +21,9 @@ namespace UnityAssetLib
         public string type;
         public string name;
 
-        public List<TypeTree> children = new List<TypeTree>();
+        public ulong refTypeHash;
+
+        public List<TypeTreeNode> children = new List<TypeTreeNode>();
 
         /*
         public TypeTree(TypeTree parent, uint format, int version, bool isArray, int size, int index, int flags, string type, string name)
@@ -37,20 +41,22 @@ namespace UnityAssetLib
         }
         */
 
-        public static TypeTree ReadTypeTree(uint format, BinaryReader buf)
+        public static TypeTreeNode ReadTypeTree(uint format, BinaryReader buf)
         {
-            TypeTree root = new TypeTree();
+            TypeTreeNode root = new TypeTreeNode();
 
             if (format == 10 || format >= 12)
             {
                 int nodesCount = buf.ReadInt32();
                 int stringBufferBytes = buf.ReadInt32();
 
-                buf.BaseStream.Seek(24 * nodesCount, SeekOrigin.Current);
-                byte[] stringData = buf.ReadBytes(stringBufferBytes);
-                buf.BaseStream.Seek(-(24 * nodesCount + stringBufferBytes), SeekOrigin.Current);
+                int nodesize = format >= 19 ? 32 : 24;
 
-                Stack<TypeTree> stack = new Stack<TypeTree>();
+                buf.BaseStream.Seek(nodesize * nodesCount, SeekOrigin.Current);
+                byte[] stringData = buf.ReadBytes(stringBufferBytes);
+                buf.BaseStream.Seek(-(nodesize * nodesCount + stringBufferBytes), SeekOrigin.Current);
+
+                Stack<TypeTreeNode> stack = new Stack<TypeTreeNode>();
 
                 stack.Push(root);
 
@@ -90,8 +96,14 @@ namespace UnityAssetLib
                         int size = buf.ReadInt32();
                         int index = buf.ReadInt32();
                         int flags = buf.ReadInt32();
+                        ulong refTypeHash = 0;
 
-                        TypeTree t;
+                        if (format >= 19)
+                        {
+                            refTypeHash = buf.ReadUInt64();
+                        }
+
+                        TypeTreeNode t;
                         if (depth == 0)
                         {
                             t = root;
@@ -100,7 +112,7 @@ namespace UnityAssetLib
                         {
                             while (stack.Count > depth)
                                 stack.Pop();
-                            t = new TypeTree();
+                            t = new TypeTreeNode();
                             stack.Peek().children.Add(t);
                             stack.Push(t);
                         }
@@ -112,6 +124,7 @@ namespace UnityAssetLib
                         t.size = size;
                         t.index = index;
                         t.flags = flags;
+                        t.refTypeHash = refTypeHash;
                     }
                 }
 
@@ -130,7 +143,7 @@ namespace UnityAssetLib
                 int childCount = buf.ReadInt32();
                 for (int i = 0; i < childCount; i++)
                 {
-                    root.children.Add(TypeTree.ReadTypeTree(format, buf));
+                    root.children.Add(TypeTreeNode.ReadTypeTree(format, buf));
                 }
             }
 

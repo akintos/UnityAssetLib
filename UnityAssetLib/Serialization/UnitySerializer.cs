@@ -192,11 +192,11 @@ namespace UnityAssetLib.Serialization
                 return byteArray;
             }
 
-            var ret = new object[size];
+            var ret = Array.CreateInstance(valueType, size);
 
             for (int i = 0; i < size; i++)
             {
-                ret[i] = ReadValueType(valueType, reader, true);
+                ret.SetValue(ReadValueType(valueType, reader, true), i);
             }
 
             reader.AlignStream();

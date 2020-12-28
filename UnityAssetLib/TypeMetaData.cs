@@ -14,7 +14,7 @@ namespace UnityAssetLib
         public Dictionary<int, byte[]> Hashes = new Dictionary<int, byte[]>();
 
         public bool hasTypeTrees;
-        public Dictionary<int, TypeTree> TypeTrees = new Dictionary<int, TypeTree>();
+        public Dictionary<int, TypeTreeNode> TypeTrees = new Dictionary<int, TypeTreeNode>();
 
         public TypeMetaData(uint format, BinaryReader buf)
         {
@@ -51,7 +51,13 @@ namespace UnityAssetLib
 
                     if (hasTypeTrees)
                     {
-                        TypeTrees.Add(classID, TypeTree.ReadTypeTree(format, buf));
+                        TypeTrees.Add(classID, TypeTreeNode.ReadTypeTree(format, buf));
+
+                        if (format >= 21)
+                        {
+                            int dependenciesCount = buf.ReadInt32();
+                            var TypeDependencies = buf.ReadInt32Array(dependenciesCount);
+                        }
                     }
                 }
             }
@@ -61,7 +67,7 @@ namespace UnityAssetLib
                 for (int i = 0; i < fieldsCount; i++)
                 {
                     int classID = buf.ReadInt32();
-                    TypeTrees.Add(classID, TypeTree.ReadTypeTree(format, buf));
+                    TypeTrees.Add(classID, TypeTreeNode.ReadTypeTree(format, buf));
                 }
             }
         }
