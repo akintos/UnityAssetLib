@@ -28,6 +28,14 @@ namespace UnityAssetLib.Types
         public int m_TextureFormat;
         public int m_MipCount;
         public bool m_IsReadable;
+
+        [UnityMinVersion(2018, 2)]
+        [UnityDoNotAlign]
+        public bool m_StreamingMipmaps;
+
+        [UnityMinVersion(2018, 2)]
+        public int m_StreamingMipmapsPriority;
+
         public int m_ImageCount;
         public int m_TextureDiemnsion;
 

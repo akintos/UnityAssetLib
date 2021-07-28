@@ -12,8 +12,6 @@ namespace UnityAssetLib.Types
         public PPtr[] m_Component;
         public uint m_Layer;
         public string m_Name;
-
-        [UnityDoNotAlign]
         public ushort m_Tag;
 
         [UnityDoNotAlign]
