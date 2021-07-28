@@ -31,20 +31,21 @@ namespace UnityAssetLib.Serialization
             }
         }
 
-        public T Deserialize<T>(AssetInfo assetInfo, bool fullDeserialize=true) where T : Types.Object
+        public T Deserialize<T>(AssetInfo assetInfo, bool fullDeserialize = true) where T : Types.Object
         {
             var ret = (T)Deserialize(typeof(T), assetInfo, fullDeserialize);
             ret.asset = assetInfo.asset;
             return ret;
         }
 
-        public object Deserialize(Type classType, AssetInfo assetInfo, bool fullDeserialize=true)
+        public object Deserialize(Type classType, AssetInfo assetInfo, bool fullDeserialize = true)
         {
             var reader = assetInfo.InitReader();
 
             var startPos = reader.Position;
 
             var ret = Deserialize(classType, reader);
+            reader.AlignStream();
 
             long readSize = (reader.Position - startPos);
 
@@ -56,7 +57,7 @@ namespace UnityAssetLib.Serialization
             return ret;
         }
 
-        public object Deserialize(Type classType, BinaryReader reader, object obj=null)
+        public object Deserialize(Type classType, BinaryReader reader, object obj = null)
         {
             if (!Attribute.IsDefined(classType, typeof(UnitySerializableAttribute)))
             {
@@ -105,7 +106,7 @@ namespace UnityAssetLib.Serialization
                 }
 
                 object value = null;
-                
+
                 if (fieldType.IsEnum)
                 {
                     var enumType = Enum.GetUnderlyingType(fieldType);
@@ -123,7 +124,7 @@ namespace UnityAssetLib.Serialization
                 {
                     value = reader.ReadAlignedString();
                 }
-                else if(fieldType.IsClass || Attribute.IsDefined(fieldType, typeof(UnitySerializableAttribute)))
+                else if (fieldType.IsClass || Attribute.IsDefined(fieldType, typeof(UnitySerializableAttribute)))
                 {
                     if (fieldType.IsArray)
                     {
@@ -146,7 +147,7 @@ namespace UnityAssetLib.Serialization
                 {
                     throw new IOException("Failed to deserialize, unknown type : " + fieldType.ToString());
                 }
-                
+
                 field.SetValue(obj, value);
             }
 
@@ -155,6 +156,7 @@ namespace UnityAssetLib.Serialization
 
         private Array ReadArray(Type elementType, BinaryReader reader)
         {
+            reader.AlignStream();
             int size = reader.ReadInt32();
 
             if (size > 0x40000)
@@ -204,11 +206,11 @@ namespace UnityAssetLib.Serialization
             return ret;
         }
 
-        private static object ReadValueType(Type valueType, BinaryReader reader, bool noAlign=false)
+        private static object ReadValueType(Type valueType, BinaryReader reader, bool noAlign = false)
         {
             if (!noAlign)
                 reader.AlignStream();
-            
+
             if (valueType == typeof(string))
             {
                 return reader.ReadAlignedString();
@@ -261,7 +263,7 @@ namespace UnityAssetLib.Serialization
             {
                 throw new ArgumentException($"{valueType} is not a value type");
             }
-            
+
         }
 
         public byte[] Serialize(object obj)
@@ -281,7 +283,7 @@ namespace UnityAssetLib.Serialization
             {
                 throw new ArgumentNullException("valueObj cannot be null");
             }
-            
+
             if (objType == null)
             {
                 objType = obj.GetType();
@@ -294,6 +296,7 @@ namespace UnityAssetLib.Serialization
                 var arrayObj = obj as Array;
                 int length = arrayObj.Length;
 
+                writer.AlignStream();
                 writer.Write(length);
 
                 if (elemType == typeof(Byte))
@@ -305,7 +308,7 @@ namespace UnityAssetLib.Serialization
                 {
                     foreach (object element in arrayObj)
                     {
-                        WriteValueType(element, writer, objType, noAlign:true);
+                        WriteValueType(element, writer, objType, noAlign: true);
                     }
 
                     writer.AlignStream();
@@ -317,7 +320,7 @@ namespace UnityAssetLib.Serialization
                         Serialize(element, writer);
                     }
                 }
-                
+
             }
             else if (objType.IsEnum)
             {
@@ -330,6 +333,7 @@ namespace UnityAssetLib.Serialization
             }
             else if (objType == typeof(string))
             {
+                writer.AlignStream();
                 writer.WriteAlignedString(obj as string);
             }
             else if (objType.IsGenericType && objType.GetGenericTypeDefinition() == typeof(List<>))
@@ -339,6 +343,7 @@ namespace UnityAssetLib.Serialization
                 var listObj = obj as IList;
                 int length = listObj.Count;
 
+                writer.AlignStream();
                 writer.Write(length);
 
                 if (elemType.IsValueType)
@@ -347,8 +352,6 @@ namespace UnityAssetLib.Serialization
                     {
                         WriteValueType(element, writer, elemType, noAlign: true);
                     }
-
-                    writer.AlignStream();
                 }
                 else
                 {
@@ -378,7 +381,7 @@ namespace UnityAssetLib.Serialization
                     }
                     var fieldValue = field.GetValue(obj);
                     var fieldType = field.FieldType;
-                    
+
                     if (fieldType.IsEnum)
                     {
                         var enumType = Enum.GetUnderlyingType(fieldType);
@@ -395,14 +398,15 @@ namespace UnityAssetLib.Serialization
 
                 }
             }
+
+            writer.AlignStream();
         }
 
         private static void WriteValueType(object valueObj, BinaryWriter writer, Type valueType, bool noAlign = false)
         {
             if (valueObj == null)
-            {
                 throw new ArgumentNullException("valueObj cannot be null");
-            }
+
             if (valueType == null)
                 valueType = valueObj.GetType();
 
