@@ -206,68 +206,62 @@ namespace UnityAssetLib.Serialization
 
         private static object ReadValueType(Type valueType, BinaryReader reader, bool noAlign=false)
         {
-            object ret = null;
-
+            if (!noAlign)
+                reader.AlignStream();
+            
             if (valueType == typeof(string))
             {
-                ret = reader.ReadAlignedString();
+                return reader.ReadAlignedString();
             }
             else if (valueType == typeof(Int32))
             {
-                ret = reader.ReadInt32();
+                return reader.ReadInt32();
             }
             else if (valueType == typeof(UInt32))
             {
-                ret = reader.ReadUInt32();
+                return reader.ReadUInt32();
             }
             else if (valueType == typeof(Int64))
             {
-                ret = reader.ReadInt64();
+                return reader.ReadInt64();
             }
             else if (valueType == typeof(UInt64))
             {
-                ret = reader.ReadUInt64();
+                return reader.ReadUInt64();
             }
             else if (valueType == typeof(Int16))
             {
-                ret = reader.ReadInt16();
-                if(!noAlign)
-                    reader.AlignStream();
+                return reader.ReadInt16();
             }
             else if (valueType == typeof(UInt16))
             {
-                ret = reader.ReadUInt16();
-                if (!noAlign)
-                    reader.AlignStream();
+                return reader.ReadUInt16();
             }
             else if (valueType == typeof(Byte))
             {
-                ret = reader.ReadByte();
-                if (!noAlign)
-                    reader.AlignStream();
+                return reader.ReadByte();
             }
             else if (valueType == typeof(SByte))
             {
-                ret = reader.ReadSByte();
-                if (!noAlign)
-                    reader.AlignStream();
+                return reader.ReadSByte();
             }
             else if (valueType == typeof(Boolean))
             {
-                ret = reader.ReadBoolean();
-                if (!noAlign)
-                    reader.AlignStream();
+                return reader.ReadBoolean();
             }
             else if (valueType == typeof(Double))
             {
-                ret = reader.ReadDouble();
+                return reader.ReadDouble();
             }
             else if (valueType == typeof(Single))
             {
-                ret = reader.ReadSingle();
+                return reader.ReadSingle();
             }
-
-            return ret;
+            else
+            {
+                throw new ArgumentException($"{valueType} is not a value type");
+            }
+            
         }
 
         public byte[] Serialize(object obj)
@@ -412,6 +406,9 @@ namespace UnityAssetLib.Serialization
             if (valueType == null)
                 valueType = valueObj.GetType();
 
+            if (!noAlign)
+                writer.AlignStream();
+
             if (valueType == typeof(Int32))
             {
                 writer.Write((int)valueObj);
@@ -431,32 +428,22 @@ namespace UnityAssetLib.Serialization
             else if (valueType == typeof(Int16))
             {
                 writer.Write((short)valueObj);
-                if (!noAlign)
-                    writer.AlignStream();
             }
             else if (valueType == typeof(UInt16))
             {
                 writer.Write((ushort)valueObj);
-                if (!noAlign)
-                    writer.AlignStream();
             }
             else if (valueType == typeof(Byte))
             {
                 writer.Write((byte)valueObj);
-                if (!noAlign)
-                    writer.AlignStream();
             }
             else if (valueType == typeof(SByte))
             {
                 writer.Write((sbyte)valueObj);
-                if (!noAlign)
-                    writer.AlignStream();
             }
             else if (valueType == typeof(Boolean))
             {
                 writer.Write((bool)valueObj);
-                if (!noAlign)
-                    writer.AlignStream();
             }
             else if (valueType == typeof(Double))
             {
