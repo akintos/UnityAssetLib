@@ -156,10 +156,13 @@ namespace UnityAssetLib
             }
         }
 
-        public AssetInfo GetAssetByName(string name)
+        public AssetInfo GetAssetByName(string name, ClassIDType assetType = ClassIDType.UnknownType)
         {
             foreach (var objInfo in assets.Values)
             {
+                if (assetType != ClassIDType.UnknownType && objInfo.classID != (int)assetType)
+                    continue;
+
                 var objName = objInfo.TryGetName();
 
                 if (objName != null && objName.Equals(name))
