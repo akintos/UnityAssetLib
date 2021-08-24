@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityAssetLib.Util;
+using UnityAssetLib.IO;
 
 namespace UnityAssetLib
 {
-
     [System.Diagnostics.DebuggerDisplay("{type} {name}")]
     public class TypeTreeNode
     {
@@ -41,7 +40,7 @@ namespace UnityAssetLib
         }
         */
 
-        public static TypeTreeNode ReadTypeTree(uint format, BinaryReader buf)
+        public static TypeTreeNode ReadTypeTree(uint format, ExtendedBinaryReader buf)
         {
             TypeTreeNode root = new TypeTreeNode();
 
@@ -60,7 +59,7 @@ namespace UnityAssetLib
 
                 stack.Push(root);
 
-                using (var stringReader = new BinaryReader(new MemoryStream(stringData)))
+                using (var stringReader = new ExtendedBinaryReader(new MemoryStream(stringData)))
                 {
                     for (int i = 0; i < nodesCount; i++)
                     {
@@ -74,7 +73,7 @@ namespace UnityAssetLib
                         if (buf.ReadUInt16() == 0)
                         {
                             stringReader.BaseStream.Position = typeIndex;
-                            typeStr = stringReader.ReadStringToNull();
+                            typeStr = stringReader.ReadNullTerminatedString();
                         }
                         else
                         {
@@ -86,7 +85,7 @@ namespace UnityAssetLib
                         if (buf.ReadUInt16() == 0)
                         {
                             stringReader.BaseStream.Position = nameIndex;
-                            nameStr = stringReader.ReadStringToNull();
+                            nameStr = stringReader.ReadNullTerminatedString();
                         }
                         else
                         {
@@ -132,8 +131,8 @@ namespace UnityAssetLib
             }
             else
             {
-                root.type = buf.ReadStringToNull();
-                root.name = buf.ReadStringToNull();
+                root.type = buf.ReadNullTerminatedString();
+                root.name = buf.ReadNullTerminatedString();
                 root.size = buf.ReadInt32();
                 root.index = buf.ReadInt32();
                 root.isArray = buf.ReadBoolean();

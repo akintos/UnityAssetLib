@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityAssetLib.Util;
+using UnityAssetLib.IO;
 
 namespace UnityAssetLib
 {
@@ -22,12 +22,12 @@ namespace UnityAssetLib
             this.filePath = filePath;
         }
 
-        public static AssetReference Read(BinaryReader reader)
+        public static AssetReference Read(ExtendedBinaryReader br)
         {
-            string assetPath = reader.ReadStringToNull();
-            byte[] GUID = reader.ReadBytes(16);
-            int type = reader.ReadInt32();
-            string filePath = reader.ReadStringToNull();
+            string assetPath = br.ReadNullTerminatedString();
+            byte[] GUID = br.ReadBytes(16);
+            int type = br.ReadInt32();
+            string filePath = br.ReadNullTerminatedString();
 
             return new AssetReference(assetPath: assetPath, GUID: GUID, type: type, filePath: filePath); 
         }

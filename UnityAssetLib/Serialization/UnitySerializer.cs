@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using UnityAssetLib.Util;
+using UnityAssetLib.IO;
 using UnityAssetLib.Types;
 
 namespace UnityAssetLib.Serialization
@@ -25,7 +25,7 @@ namespace UnityAssetLib.Serialization
         public T Deserialize<T>(byte[] data) where T : Types.Object
         {
             using (var ms = new MemoryStream(data, false))
-            using (var reader = new BinaryReader(ms))
+            using (var reader = new ExtendedBinaryReader(ms))
             {
                 return (T)Deserialize(typeof(T), reader);
             }
@@ -57,7 +57,7 @@ namespace UnityAssetLib.Serialization
             return ret;
         }
 
-        public object Deserialize(Type classType, BinaryReader reader, object obj = null)
+        public object Deserialize(Type classType, ExtendedBinaryReader br, object obj = null)
         {
             if (!Attribute.IsDefined(classType, typeof(UnitySerializableAttribute)))
             {
@@ -72,7 +72,7 @@ namespace UnityAssetLib.Serialization
             // Deserialize base type first because Type.GetFields() returns base fields last
             if (Attribute.IsDefined(classType.BaseType, typeof(UnitySerializableAttribute)))
             {
-                Deserialize(classType.BaseType, reader, obj);
+                Deserialize(classType.BaseType, br, obj);
             }
 
             foreach (var field in classType.GetFields())
@@ -110,19 +110,19 @@ namespace UnityAssetLib.Serialization
                 if (fieldType.IsEnum)
                 {
                     var enumType = Enum.GetUnderlyingType(fieldType);
-                    value = ReadValueType(enumType, reader, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
+                    value = ReadValueType(enumType, br, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
                 }
                 else if (fieldType.IsValueType)
                 {
-                    value = ReadValueType(fieldType, reader, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
+                    value = ReadValueType(fieldType, br, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
                 }
                 else if (fieldType.IsArray && fieldType.GetElementType().IsValueType) // Value type array
                 {
-                    value = ReadValueArray(fieldType.GetElementType(), reader);
+                    value = ReadValueArray(fieldType.GetElementType(), br);
                 }
                 else if (fieldType == typeof(string))
                 {
-                    value = reader.ReadAlignedString();
+                    value = br.ReadAlignedString();
                 }
                 else if (fieldType.IsClass || Attribute.IsDefined(fieldType, typeof(UnitySerializableAttribute)))
                 {
@@ -130,17 +130,17 @@ namespace UnityAssetLib.Serialization
                     {
                         var elementType = fieldType.GetElementType();
 
-                        value = ReadArray(elementType, reader);
+                        value = ReadArray(elementType, br);
                     }
                     else if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(List<>))
                     {
                         var elementType = fieldType.GetGenericArguments()[0];
 
-                        value = Activator.CreateInstance(fieldType, (IEnumerable)ReadArray(elementType, reader));
+                        value = Activator.CreateInstance(fieldType, (IEnumerable)ReadArray(elementType, br));
                     }
                     else
                     {
-                        value = Deserialize(fieldType, reader);
+                        value = Deserialize(fieldType, br);
                     }
                 }
                 else
@@ -154,10 +154,10 @@ namespace UnityAssetLib.Serialization
             return obj;
         }
 
-        private Array ReadArray(Type elementType, BinaryReader reader)
+        private Array ReadArray(Type elementType, ExtendedBinaryReader br)
         {
-            reader.AlignStream();
-            int size = reader.ReadInt32();
+            br.AlignStream();
+            int size = br.ReadInt32();
 
             if (size > 0x40000)
                 throw new IOException("Size exceeds limit : " + size);
@@ -168,14 +168,14 @@ namespace UnityAssetLib.Serialization
             {
                 for (int i = 0; i < size; i++)
                 {
-                    valueArray.SetValue(reader.ReadAlignedString(), i);
+                    valueArray.SetValue(br.ReadAlignedString(), i);
                 }
             }
             else
             {
                 for (int i = 0; i < size; i++)
                 {
-                    valueArray.SetValue(Deserialize(elementType, reader), i);
+                    valueArray.SetValue(Deserialize(elementType, br), i);
                 }
             }
 
@@ -183,14 +183,14 @@ namespace UnityAssetLib.Serialization
         }
 
 
-        private static object ReadValueArray(Type valueType, BinaryReader reader)
+        private static object ReadValueArray(Type valueType, ExtendedBinaryReader br)
         {
-            int size = reader.ReadInt32();
+            int size = br.ReadInt32();
 
             if (valueType == typeof(byte) || valueType == typeof(Byte))
             {
-                var byteArray = reader.ReadBytes(size);
-                reader.AlignStream();
+                var byteArray = br.ReadBytes(size);
+                br.AlignStream();
                 return byteArray;
             }
 
@@ -198,66 +198,66 @@ namespace UnityAssetLib.Serialization
 
             for (int i = 0; i < size; i++)
             {
-                ret.SetValue(ReadValueType(valueType, reader, true), i);
+                ret.SetValue(ReadValueType(valueType, br, true), i);
             }
 
-            reader.AlignStream();
+            br.AlignStream();
 
             return ret;
         }
 
-        private static object ReadValueType(Type valueType, BinaryReader reader, bool noAlign = false)
+        private static object ReadValueType(Type valueType, ExtendedBinaryReader br, bool noAlign = false)
         {
             if (!noAlign)
-                reader.AlignStream();
+                br.AlignStream();
 
             if (valueType == typeof(string))
             {
-                return reader.ReadAlignedString();
+                return br.ReadAlignedString();
             }
             else if (valueType == typeof(Int32))
             {
-                return reader.ReadInt32();
+                return br.ReadInt32();
             }
             else if (valueType == typeof(UInt32))
             {
-                return reader.ReadUInt32();
+                return br.ReadUInt32();
             }
             else if (valueType == typeof(Int64))
             {
-                return reader.ReadInt64();
+                return br.ReadInt64();
             }
             else if (valueType == typeof(UInt64))
             {
-                return reader.ReadUInt64();
+                return br.ReadUInt64();
             }
             else if (valueType == typeof(Int16))
             {
-                return reader.ReadInt16();
+                return br.ReadInt16();
             }
             else if (valueType == typeof(UInt16))
             {
-                return reader.ReadUInt16();
+                return br.ReadUInt16();
             }
             else if (valueType == typeof(Byte))
             {
-                return reader.ReadByte();
+                return br.ReadByte();
             }
             else if (valueType == typeof(SByte))
             {
-                return reader.ReadSByte();
+                return br.ReadSByte();
             }
             else if (valueType == typeof(Boolean))
             {
-                return reader.ReadBoolean();
+                return br.ReadBoolean();
             }
             else if (valueType == typeof(Double))
             {
-                return reader.ReadDouble();
+                return br.ReadDouble();
             }
             else if (valueType == typeof(Single))
             {
-                return reader.ReadSingle();
+                return br.ReadSingle();
             }
             else
             {
@@ -269,7 +269,7 @@ namespace UnityAssetLib.Serialization
         public byte[] Serialize(object obj)
         {
             using (var ms = new MemoryStream())
-            using (var writer = new BinaryWriter(ms))
+            using (var writer = new ExtendedBinaryWriter(ms))
             {
                 Serialize(obj, writer);
 
@@ -277,7 +277,7 @@ namespace UnityAssetLib.Serialization
             }
         }
 
-        public void Serialize(object obj, BinaryWriter writer, Type objType = null)
+        public void Serialize(object obj, ExtendedBinaryWriter writer, Type objType = null)
         {
             if (obj == null)
             {
@@ -402,7 +402,7 @@ namespace UnityAssetLib.Serialization
             writer.AlignStream();
         }
 
-        private static void WriteValueType(object valueObj, BinaryWriter writer, Type valueType, bool noAlign = false)
+        private static void WriteValueType(object valueObj, ExtendedBinaryWriter writer, Type valueType, bool noAlign = false)
         {
             if (valueObj == null)
                 throw new ArgumentNullException("valueObj cannot be null");

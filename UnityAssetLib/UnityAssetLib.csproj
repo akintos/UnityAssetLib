@@ -52,6 +52,8 @@
     <Compile Include="ClassIDType.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="AssetInfo.cs" />
+    <Compile Include="IO\EndianType.cs" />
+    <Compile Include="IO\ExtendedBinaryWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\UnitySerializationAttribute.cs" />
     <Compile Include="Serialization\UnitySerializer.cs" />
@@ -68,9 +70,7 @@
     <Compile Include="Types\Texture2D.cs" />
     <Compile Include="ExternalTypes\TMP_FontAsset.cs" />
     <Compile Include="TypeTreeNode.cs" />
-    <Compile Include="Util\BinaryReaderExtensions.cs" />
-    <Compile Include="Util\BinaryWriterExtensions.cs" />
-    <Compile Include="Util\EndianBinaryReader.cs" />
+    <Compile Include="IO\ExtendedBinaryReader.cs" />
     <Compile Include="Texture\Texture2DExporter.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

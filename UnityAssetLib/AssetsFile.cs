@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using UnityAssetLib.Util;
+using UnityAssetLib.IO;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 
@@ -11,7 +11,7 @@ namespace UnityAssetLib
 {
     public class AssetsFile : IDisposable
     {
-        public readonly EndianBinaryReader buf;
+        public readonly ExtendedBinaryReader buf;
         public readonly string path;
         public readonly string basepath;
 
@@ -55,7 +55,7 @@ namespace UnityAssetLib
         {
             this.path = path;
 
-            buf = new EndianBinaryReader(File.OpenRead(path));
+            buf = new ExtendedBinaryReader(File.OpenRead(path));
             basepath = Path.GetDirectoryName(path);
 
             buf.endian = EndianType.BigEndian;
@@ -78,7 +78,7 @@ namespace UnityAssetLib
 
             buf.endian = fileEndianType;
 
-            string versionString = buf.ReadStringToNull();
+            string versionString = buf.ReadNullTerminatedString();
 
             versionString = versionString.Replace('p', '.');
             versionString = versionString.Replace('f', '.');
@@ -192,7 +192,7 @@ namespace UnityAssetLib
                 File.Delete(path);
             }
 
-            using (BinaryWriter w = new BinaryWriter(File.OpenWrite(path)))
+            using (var w = new ExtendedBinaryWriter(File.OpenWrite(path)))
             {
                 buf.Position = 0;
                 w.Write(buf.ReadBytes((int)data_offset));

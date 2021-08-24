@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityAssetLib.Util;
+using UnityAssetLib.IO;
 
 namespace UnityAssetLib
 {
@@ -16,7 +16,7 @@ namespace UnityAssetLib
         public bool hasTypeTrees;
         public Dictionary<int, TypeTreeNode> TypeTrees = new Dictionary<int, TypeTreeNode>();
 
-        public TypeMetaData(uint format, BinaryReader buf)
+        public TypeMetaData(uint format, ExtendedBinaryReader buf)
         {
             if (format >= 13)
             {
@@ -56,7 +56,7 @@ namespace UnityAssetLib
                         if (format >= 21)
                         {
                             int dependenciesCount = buf.ReadInt32();
-                            var TypeDependencies = buf.ReadInt32Array(dependenciesCount);
+                            var TypeDependencies = (int[])buf.ReadValueArray<int>(dependenciesCount);
                         }
                     }
                 }

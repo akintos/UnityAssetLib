@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityAssetLib.Types;
-using UnityAssetLib.Util;
+using UnityAssetLib.IO;
 
 namespace UnityAssetLib.Texture
 {

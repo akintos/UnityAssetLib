@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using UnityAssetLib.Util;
+using UnityAssetLib.IO;
 
 namespace UnityAssetLib
 {
@@ -63,7 +63,7 @@ namespace UnityAssetLib
             get => Enum.IsDefined(typeof(ClassIDType), classID);
         }
 
-        public EndianBinaryReader InitReader()
+        public ExtendedBinaryReader InitReader()
         {
             var buf = asset.buf;
             buf.Position = RealOffset;
