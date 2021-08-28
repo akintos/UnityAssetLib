@@ -11,6 +11,7 @@ namespace UnityAssetLib.Texture
 {
     internal class DDSExporter
     {
+#pragma warning disable IDE0051 // unused private members
         private const uint DDSD_CAPS = 0x01;
         private const uint DDSD_HEIGHT = 0x02;
         private const uint DDSD_WIDTH = 0x04;
@@ -30,6 +31,7 @@ namespace UnityAssetLib.Texture
         private const uint DDPF_RGB = 0x40;
         private const uint DDPF_YUV = 0x200;
         private const uint DDPF_LUMINANCE = 0x20000;
+#pragma warning restore IDE0051 // unused private members
 
         private static readonly uint[] DDS_GENERATOR_DATA = 
             { 0x74696E55, 0x73734179, 0x694C7465, 0x53444462, 0, 0, 0, 0, 0, 0, 0};
@@ -80,7 +82,7 @@ namespace UnityAssetLib.Texture
                 texture.Format != TextureFormat.RG16 &&
                 texture.Format != TextureFormat.R8)
             {
-                throw new UnsupportedFormatException($"Cannot export {texture.Format.ToString()} to DDS format.");
+                throw new UnsupportedFormatException($"Cannot export {texture.Format} to DDS format.");
             }
 
             string exportPath = Path.Combine(directory, $"{texture.m_Name}.dds");

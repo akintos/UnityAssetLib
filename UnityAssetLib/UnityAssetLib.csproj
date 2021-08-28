@@ -12,6 +12,7 @@
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -47,14 +48,35 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssetReference.cs" />
-    <Compile Include="AssetsFile.cs" />
-    <Compile Include="ClassIDType.cs" />
+    <Compile Include="AssetBundleFile\AssetBundleFile.cs" />
+    <Compile Include="AssetBundleFile\AssetBundleHeader.cs" />
+    <Compile Include="AssetsFile\AssetReference.cs" />
+    <Compile Include="AssetsFile\AssetsFile.cs" />
+    <Compile Include="AssetsFile\ClassIDType.cs" />
+    <Compile Include="Compression\7zip\Common\CRC.cs" />
+    <Compile Include="Compression\7zip\Common\InBuffer.cs" />
+    <Compile Include="Compression\7zip\Common\OutBuffer.cs" />
+    <Compile Include="Compression\7zip\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="Compression\7zip\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="Compression\7zip\Compress\LZMA\LzmaEncoder.cs" />
+    <Compile Include="Compression\7zip\Compress\LZ\IMatchFinder.cs" />
+    <Compile Include="Compression\7zip\Compress\LZ\LzBinTree.cs" />
+    <Compile Include="Compression\7zip\Compress\LZ\LzInWindow.cs" />
+    <Compile Include="Compression\7zip\Compress\LZ\LzOutWindow.cs" />
+    <Compile Include="Compression\7zip\Compress\RangeCoder\RangeCoder.cs" />
+    <Compile Include="Compression\7zip\Compress\RangeCoder\RangeCoderBit.cs" />
+    <Compile Include="Compression\7zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
+    <Compile Include="Compression\7zip\ICoder.cs" />
+    <Compile Include="Compression\7zip\SevenZipHelper.cs" />
+    <Compile Include="Compression\CompressionHelper.cs" />
+    <Compile Include="Compression\CompressionType.cs" />
+    <Compile Include="Compression\Lz4DecoderStream.cs" />
     <Compile Include="Exceptions.cs" />
-    <Compile Include="AssetInfo.cs" />
+    <Compile Include="AssetsFile\AssetInfo.cs" />
     <Compile Include="IO\EndianType.cs" />
     <Compile Include="IO\ExtendedBinaryWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serialization\TypeTreeSerializer.cs" />
     <Compile Include="Serialization\UnitySerializationAttribute.cs" />
     <Compile Include="Serialization\UnitySerializer.cs" />
     <Compile Include="Texture\DDSExporter.cs" />
