@@ -75,7 +75,9 @@ namespace UnityAssetLib.Serialization
                 Deserialize(classType.BaseType, br, obj);
             }
 
-            foreach (var field in classType.GetFields())
+            var fieldArray = classType.GetFields();
+
+            foreach (var field in fieldArray)
             {
                 if (!field.DeclaringType.Equals(classType))
                     continue;
@@ -106,15 +108,18 @@ namespace UnityAssetLib.Serialization
                 }
 
                 object value = null;
+                bool doNotAlign = Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute));
+                if (!doNotAlign)
+                    br.AlignStream();
 
                 if (fieldType.IsEnum)
                 {
                     var enumType = Enum.GetUnderlyingType(fieldType);
-                    value = ReadValueType(enumType, br, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
+                    value = ReadValueType(enumType, br);
                 }
                 else if (fieldType.IsValueType)
                 {
-                    value = ReadValueType(fieldType, br, Attribute.IsDefined(field, typeof(UnityDoNotAlignAttribute)));
+                    value = ReadValueType(fieldType, br);
                 }
                 else if (fieldType.IsArray && fieldType.GetElementType().IsValueType) // Value type array
                 {
@@ -136,7 +141,17 @@ namespace UnityAssetLib.Serialization
                     {
                         var elementType = fieldType.GetGenericArguments()[0];
 
-                        value = Activator.CreateInstance(fieldType, (IEnumerable)ReadArray(elementType, br));
+                        object array;
+                        if (elementType.IsValueType)
+                        {
+                            array = ReadValueArray(elementType, br);
+                        }
+                        else
+                        {
+                            array = ReadArray(elementType, br);
+                        }
+
+                        value = Activator.CreateInstance(fieldType, (IEnumerable)array);
                     }
                     else
                     {
@@ -156,7 +171,6 @@ namespace UnityAssetLib.Serialization
 
         private Array ReadArray(Type elementType, ExtendedBinaryReader br)
         {
-            br.AlignStream();
             int size = br.ReadInt32();
 
             if (size > 0x40000)
@@ -183,25 +197,30 @@ namespace UnityAssetLib.Serialization
         }
 
 
-        private static object ReadValueArray(Type valueType, ExtendedBinaryReader br)
+        private static object ReadValueArray(Type elementType, ExtendedBinaryReader br)
         {
             int size = br.ReadInt32();
 
-            if (valueType == typeof(byte) || valueType == typeof(Byte))
+            if (elementType == typeof(byte) || elementType == typeof(Byte))
             {
-                var byteArray = br.ReadBytes(size);
-                br.AlignStream();
-                return byteArray;
+                return br.ReadBytes(size);
             }
 
-            var ret = Array.CreateInstance(valueType, size);
+            var ret = Array.CreateInstance(elementType, size);
+
+            Type valueType = elementType;
+            if (elementType.IsEnum)
+            {
+                valueType = Enum.GetUnderlyingType(elementType);
+            }
 
             for (int i = 0; i < size; i++)
             {
-                ret.SetValue(ReadValueType(valueType, br, true), i);
+                var element = ReadValueType(valueType, br, noAlign: true);
+                if (elementType.IsEnum)
+                    element = Enum.ToObject(elementType, element);
+                ret.SetValue(element, i);
             }
-
-            br.AlignStream();
 
             return ret;
         }
@@ -263,7 +282,6 @@ namespace UnityAssetLib.Serialization
             {
                 throw new ArgumentException($"{valueType} is not a value type");
             }
-
         }
 
         public byte[] Serialize(object obj)
